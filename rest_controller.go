@@ -17,7 +17,7 @@ const (
 )
 
 type RestController struct {
-	GetModel       func() surf.Worker
+	GetModel       surf.BuildModel
 	LifecycleHooks LifecycleHooks
 }
 
@@ -112,6 +112,79 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 
 	// OK
 	resp.SetResult(http.StatusOK, model)
+}
+
+func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
+	resp := response.New(&w, r)
+	defer resp.Output()
+
+	// Create bulkFetchConfig model
+	bulkFetchConfig := surf.BulkFetchConfig{}
+
+	// Validate
+	var sort string
+	err := validator.Validate([]*validator.Value{
+		{
+			Result: &bulkFetchConfig.Limit,
+			Name:   "limit",
+			Input:  r.URL.Query().Get("limit"),
+			Rules: []validator.Rule{
+				rules.MinValue(1),
+			},
+			Default: "10",
+		},
+		{
+			Result: &bulkFetchConfig.Offset,
+			Name:   "offset",
+			Input:  r.URL.Query().Get("offset"),
+			Rules: []validator.Rule{
+				rules.MinValue(0),
+			},
+			Default: "0",
+		},
+		{
+			Result:  &sort,
+			Name:    "sort",
+			Input:   r.URL.Query().Get("sort"),
+			Rules:   []validator.Rule{validateSortField(rc.GetModel().GetConfiguration())},
+			Default: "created_at",
+		},
+	})
+	if err != nil {
+		resp.SetErrorDetails(err.Error())
+		resp.SetResult(http.StatusBadRequest, nil)
+		return
+	}
+
+	// Consume sort query
+	bulkFetchConfig.ConsumeSortQuery(sort)
+
+	// Before Index hook
+	if rc.LifecycleHooks.BeforeIndex != nil {
+		err := rc.LifecycleHooks.BeforeIndex(resp, r, &bulkFetchConfig)
+		if err != nil {
+			return
+		}
+	}
+
+	// Load models
+	models, err := rc.GetModel().BulkFetch(bulkFetchConfig, rc.GetModel)
+	if err != nil {
+		resp.SetResult(http.StatusBadRequest, nil)
+		resp.SetErrorDetails(err.Error())
+		return
+	}
+
+	// After Index hook
+	if rc.LifecycleHooks.AfterIndex != nil {
+		err := rc.LifecycleHooks.AfterIndex(resp, r, &bulkFetchConfig)
+		if err != nil {
+			return
+		}
+	}
+
+	// OK
+	resp.SetResult(http.StatusOK, models)
 }
 
 func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
