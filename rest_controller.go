@@ -76,7 +76,7 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Before Create hook
 	if rc.LifecycleHooks.BeforeCreate != nil {
-		err := rc.LifecycleHooks.BeforeCreate(resp, r, &model)
+		err := rc.LifecycleHooks.BeforeCreate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -104,7 +104,7 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 
 	// After Create hook
 	if rc.LifecycleHooks.AfterCreate != nil {
-		err := rc.LifecycleHooks.AfterCreate(resp, r, &model)
+		err := rc.LifecycleHooks.AfterCreate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -214,7 +214,7 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 
 	// Before Show hook
 	if rc.LifecycleHooks.BeforeShow != nil {
-		err := rc.LifecycleHooks.BeforeShow(resp, r, &model)
+		err := rc.LifecycleHooks.BeforeShow(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -229,7 +229,7 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 
 	// After Show hook
 	if rc.LifecycleHooks.AfterShow != nil {
-		err := rc.LifecycleHooks.AfterShow(resp, r, &model)
+		err := rc.LifecycleHooks.AfterShow(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -313,7 +313,7 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 
 	// Before Update hook
 	if rc.LifecycleHooks.BeforeUpdate != nil {
-		err := rc.LifecycleHooks.BeforeUpdate(resp, r, &model)
+		err := rc.LifecycleHooks.BeforeUpdate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -341,7 +341,7 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 
 	// After Update hook
 	if rc.LifecycleHooks.AfterUpdate != nil {
-		err := rc.LifecycleHooks.AfterUpdate(resp, r, &model)
+		err := rc.LifecycleHooks.AfterUpdate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -378,7 +378,7 @@ func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	// Before Delete hook
 	if rc.LifecycleHooks.BeforeDelete != nil {
-		err := rc.LifecycleHooks.BeforeDelete(resp, r, &model)
+		err := rc.LifecycleHooks.BeforeDelete(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -393,7 +393,7 @@ func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	// After Delete hook
 	if rc.LifecycleHooks.AfterDelete != nil {
-		err := rc.LifecycleHooks.AfterDelete(resp, r, &model)
+		err := rc.LifecycleHooks.AfterDelete(resp, r, model)
 		if err != nil {
 			return
 		}
