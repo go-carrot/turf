@@ -1,4 +1,4 @@
-package turf
+package rest
 
 import (
 	"fmt"
@@ -14,6 +14,17 @@ func baseModelIdValue(output *int64, r *http.Request) *validator.Value {
 		Result: output,
 		Name:   "id",
 		Input:  strings.Split(r.URL.Path, "/")[2],
+		Rules: []validator.Rule{
+			rules.IsSet,
+		},
+	}
+}
+
+func nestedModelIdValue(output *int64, r *http.Request) *validator.Value {
+	return &validator.Value{
+		Result: output,
+		Name:   "nested_id",
+		Input:  strings.Split(r.URL.Path, "/")[4],
 		Rules: []validator.Rule{
 			rules.IsSet,
 		},

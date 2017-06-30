@@ -1,37 +1,54 @@
-package turf
+package rest
 
 import (
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
-	"github.com/go-carrot/turf/response"
+	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
+	"github.com/julienschmidt/httprouter"
 	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
-const (
-	POSTGRES_NOT_NULL_VIOLATION          = "23502"
-	POSTGRES_ERROR_FOREIGN_KEY_VIOLATION = "23503"
-	POSTGRES_ERROR_UNIQUE_VIOLATION      = "23505"
-)
-
-type RestController struct {
-	GetModel       surf.BuildModel
-	LifecycleHooks LifecycleHooks
+type BaseController struct {
+	GetModel        surf.BuildModel
+	LifecycleHooks  turf.LifecycleHooks
+	MethodWhiteList []string
 }
 
-func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
-	resp := response.New(&w, r)
+func (c BaseController) Register(r *httprouter.Router, mw turf.Middleware) {
+	tableName := c.GetModel().GetConfiguration().TableName
+	hasWhitelist := len(c.MethodWhiteList) != 0
+
+	if !hasWhitelist || contains(c.MethodWhiteList, turf.CREATE) {
+		r.HandlerFunc(http.MethodPost, "/"+tableName, mw(c.Create))
+	}
+	if !hasWhitelist || contains(c.MethodWhiteList, turf.INDEX) {
+		r.HandlerFunc(http.MethodGet, "/"+tableName, mw(c.Index))
+	}
+	if !hasWhitelist || contains(c.MethodWhiteList, turf.SHOW) {
+		r.HandlerFunc(http.MethodGet, "/"+tableName+"/:id", mw(c.Show))
+	}
+	if !hasWhitelist || contains(c.MethodWhiteList, turf.UPDATE) {
+		r.HandlerFunc(http.MethodPut, "/"+tableName+"/:id", mw(c.Update))
+	}
+	if !hasWhitelist || contains(c.MethodWhiteList, turf.DELETE) {
+		r.HandlerFunc(http.MethodDelete, "/"+tableName+"/:id", mw(c.Delete))
+	}
+}
+
+func (c BaseController) Create(w http.ResponseWriter, r *http.Request) {
+	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
 	// Create Model
-	model := rc.GetModel()
+	model := c.GetModel()
 
 	// Generate values
 	var values []*validator.Value
 	for _, field := range model.GetConfiguration().Fields {
-		if field.Insertable {
+		if field.Insertable && !field.SkipValidation {
 
 			// Determine TypeHandler (if any)
 			var typeHandler validator.TypeHandler
@@ -75,8 +92,8 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Before Create hook
-	if rc.LifecycleHooks.BeforeCreate != nil {
-		err := rc.LifecycleHooks.BeforeCreate(resp, r, model)
+	if c.LifecycleHooks.BeforeCreate != nil {
+		err := c.LifecycleHooks.BeforeCreate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -103,8 +120,8 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// After Create hook
-	if rc.LifecycleHooks.AfterCreate != nil {
-		err := rc.LifecycleHooks.AfterCreate(resp, r, model)
+	if c.LifecycleHooks.AfterCreate != nil {
+		err := c.LifecycleHooks.AfterCreate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -114,8 +131,8 @@ func (rc RestController) Create(w http.ResponseWriter, r *http.Request) {
 	resp.SetResult(http.StatusOK, model)
 }
 
-func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
-	resp := response.New(&w, r)
+func (c BaseController) Index(w http.ResponseWriter, r *http.Request) {
+	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
 	// Create bulkFetchConfig model
@@ -146,7 +163,7 @@ func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
 			Result:  &sort,
 			Name:    "sort",
 			Input:   r.URL.Query().Get("sort"),
-			Rules:   []validator.Rule{validateSortField(rc.GetModel().GetConfiguration())},
+			Rules:   []validator.Rule{validateSortField(c.GetModel().GetConfiguration())},
 			Default: "created_at",
 		},
 	})
@@ -160,15 +177,15 @@ func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
 	bulkFetchConfig.ConsumeSortQuery(sort)
 
 	// Before Index hook
-	if rc.LifecycleHooks.BeforeIndex != nil {
-		err := rc.LifecycleHooks.BeforeIndex(resp, r, &bulkFetchConfig)
+	if c.LifecycleHooks.BeforeIndex != nil {
+		err := c.LifecycleHooks.BeforeIndex(resp, r, &bulkFetchConfig)
 		if err != nil {
 			return
 		}
 	}
 
 	// Load models
-	models, err := rc.GetModel().BulkFetch(bulkFetchConfig, rc.GetModel)
+	models, err := c.GetModel().BulkFetch(bulkFetchConfig, c.GetModel)
 	if err != nil {
 		resp.SetResult(http.StatusBadRequest, nil)
 		resp.SetErrorDetails(err.Error())
@@ -176,8 +193,8 @@ func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// After Index hook
-	if rc.LifecycleHooks.AfterIndex != nil {
-		err := rc.LifecycleHooks.AfterIndex(resp, r, &bulkFetchConfig)
+	if c.LifecycleHooks.AfterIndex != nil {
+		err := c.LifecycleHooks.AfterIndex(resp, r, &bulkFetchConfig)
 		if err != nil {
 			return
 		}
@@ -187,8 +204,8 @@ func (rc RestController) Index(w http.ResponseWriter, r *http.Request) {
 	resp.SetResult(http.StatusOK, models)
 }
 
-func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
-	resp := response.New(&w, r)
+func (c BaseController) Show(w http.ResponseWriter, r *http.Request) {
+	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
 	// Validate Params
@@ -203,7 +220,7 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set ID
-	model := rc.GetModel()
+	model := c.GetModel()
 	configuration := model.GetConfiguration()
 	for _, field := range configuration.Fields {
 		if field.Name == "id" {
@@ -213,8 +230,8 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Before Show hook
-	if rc.LifecycleHooks.BeforeShow != nil {
-		err := rc.LifecycleHooks.BeforeShow(resp, r, model)
+	if c.LifecycleHooks.BeforeShow != nil {
+		err := c.LifecycleHooks.BeforeShow(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -228,8 +245,8 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// After Show hook
-	if rc.LifecycleHooks.AfterShow != nil {
-		err := rc.LifecycleHooks.AfterShow(resp, r, model)
+	if c.LifecycleHooks.AfterShow != nil {
+		err := c.LifecycleHooks.AfterShow(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -239,12 +256,12 @@ func (rc RestController) Show(w http.ResponseWriter, r *http.Request) {
 	resp.SetResult(http.StatusOK, model)
 }
 
-func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
-	resp := response.New(&w, r)
+func (c BaseController) Update(w http.ResponseWriter, r *http.Request) {
+	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
 	// Create Model
-	model := rc.GetModel()
+	model := c.GetModel()
 
 	// Validate ID
 	var id int64
@@ -276,7 +293,7 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 	// Generate values
 	var values []*validator.Value
 	for _, field := range model.GetConfiguration().Fields {
-		if field.Updatable {
+		if field.Updatable && !field.SkipValidation {
 			// Determine TypeHandler (if any)
 			var typeHandler validator.TypeHandler
 			switch field.Pointer.(type) {
@@ -312,8 +329,8 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Before Update hook
-	if rc.LifecycleHooks.BeforeUpdate != nil {
-		err := rc.LifecycleHooks.BeforeUpdate(resp, r, model)
+	if c.LifecycleHooks.BeforeUpdate != nil {
+		err := c.LifecycleHooks.BeforeUpdate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -340,8 +357,8 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// After Update hook
-	if rc.LifecycleHooks.AfterUpdate != nil {
-		err := rc.LifecycleHooks.AfterUpdate(resp, r, model)
+	if c.LifecycleHooks.AfterUpdate != nil {
+		err := c.LifecycleHooks.AfterUpdate(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -351,8 +368,8 @@ func (rc RestController) Update(w http.ResponseWriter, r *http.Request) {
 	resp.SetResult(http.StatusOK, model)
 }
 
-func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
-	resp := response.New(&w, r)
+func (c BaseController) Delete(w http.ResponseWriter, r *http.Request) {
+	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
 	// Validate Params
@@ -367,7 +384,7 @@ func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set ID
-	model := rc.GetModel()
+	model := c.GetModel()
 	configuration := model.GetConfiguration()
 	for _, field := range configuration.Fields {
 		if field.Name == "id" {
@@ -377,8 +394,8 @@ func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Before Delete hook
-	if rc.LifecycleHooks.BeforeDelete != nil {
-		err := rc.LifecycleHooks.BeforeDelete(resp, r, model)
+	if c.LifecycleHooks.BeforeDelete != nil {
+		err := c.LifecycleHooks.BeforeDelete(resp, r, model)
 		if err != nil {
 			return
 		}
@@ -392,8 +409,8 @@ func (rc RestController) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// After Delete hook
-	if rc.LifecycleHooks.AfterDelete != nil {
-		err := rc.LifecycleHooks.AfterDelete(resp, r, model)
+	if c.LifecycleHooks.AfterDelete != nil {
+		err := c.LifecycleHooks.AfterDelete(resp, r, model)
 		if err != nil {
 			return
 		}

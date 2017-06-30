@@ -1,4 +1,4 @@
-package response
+package rest
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func New(w *http.ResponseWriter, r *http.Request) *response.Response {
+func newRestResponse(w *http.ResponseWriter, r *http.Request) *response.Response {
 	return response.New().SetRenderer(
 		&responseWriterRenderer{
 			ResponseWriter: w,
