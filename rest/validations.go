@@ -31,7 +31,7 @@ func nestedModelIdValue(output *int64, r *http.Request) *validator.Value {
 	}
 }
 
-func defaultLimitValue(output *int64, r *http.Request) *validator.Value {
+func defaultLimitValue(output *int, r *http.Request) *validator.Value {
 	return &validator.Value{
 		Result:  output,
 		Name:    "limit",
@@ -44,7 +44,7 @@ func defaultLimitValue(output *int64, r *http.Request) *validator.Value {
 	}
 }
 
-func defaultOffsetValue(output *int64, r *http.Request) *validator.Value {
+func defaultOffsetValue(output *int, r *http.Request) *validator.Value {
 	return &validator.Value{
 		Result:  output,
 		Name:    "offset",
@@ -53,6 +53,16 @@ func defaultOffsetValue(output *int64, r *http.Request) *validator.Value {
 		Rules: []validator.Rule{
 			rules.MinValue(0),
 		},
+	}
+}
+
+func defaultSortValue(output *string, config *surf.Configuration, r *http.Request) *validator.Value {
+	return &validator.Value{
+		Result:  output,
+		Name:    "sort",
+		Input:   r.URL.Query().Get("sort"),
+		Rules:   []validator.Rule{validateSortField(config)},
+		Default: "created_at",
 	}
 }
 

@@ -141,31 +141,9 @@ func (c BaseController) Index(w http.ResponseWriter, r *http.Request) {
 	// Validate
 	var sort string
 	err := validator.Validate([]*validator.Value{
-		{
-			Result: &bulkFetchConfig.Limit,
-			Name:   "limit",
-			Input:  r.URL.Query().Get("limit"),
-			Rules: []validator.Rule{
-				rules.MinValue(1),
-			},
-			Default: "10",
-		},
-		{
-			Result: &bulkFetchConfig.Offset,
-			Name:   "offset",
-			Input:  r.URL.Query().Get("offset"),
-			Rules: []validator.Rule{
-				rules.MinValue(0),
-			},
-			Default: "0",
-		},
-		{
-			Result:  &sort,
-			Name:    "sort",
-			Input:   r.URL.Query().Get("sort"),
-			Rules:   []validator.Rule{validateSortField(c.GetModel().GetConfiguration())},
-			Default: "created_at",
-		},
+		defaultLimitValue(&bulkFetchConfig.Limit, r),
+		defaultOffsetValue(&bulkFetchConfig.Offset, r),
+		defaultSortValue(&sort, c.GetModel().GetConfiguration(), r),
 	})
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
