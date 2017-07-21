@@ -13,7 +13,7 @@ import (
 
 type BaseController struct {
 	GetModel        surf.BuildModel
-	LifecycleHooks  turf.LifecycleHooks
+	LifecycleHooks  LifecycleHooks
 	MethodWhiteList []string
 }
 

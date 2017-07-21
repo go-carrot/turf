@@ -12,12 +12,12 @@ import (
 )
 
 type OneToManyController struct {
-	GetBaseModel    surf.BuildModel
-	GetNestedModel  surf.BuildModel
-	NestedReference string
-	BelongsTo       func(baseModel, nestedModel surf.Model) bool
-	LifecycleHooks  turf.LifecycleHooks
-	MethodWhiteList []string
+	GetBaseModel           surf.BuildModel
+	GetNestedModel         surf.BuildModel
+	NestedForeignReference string
+	BelongsTo              func(baseModel, nestedModel surf.Model) bool
+	LifecycleHooks         LifecycleHooks
+	MethodWhiteList        []string
 }
 
 func (c OneToManyController) Register(r *httprouter.Router, mw turf.Middleware) {
@@ -77,7 +77,7 @@ func (c OneToManyController) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Validate insertable fields
 	for _, field := range model.GetConfiguration().Fields {
-		if field.Insertable && !field.SkipValidation && field.Name != c.NestedReference {
+		if field.Insertable && !field.SkipValidation && field.Name != c.NestedForeignReference {
 
 			// Determine TypeHandler (if any)
 			var typeHandler validator.TypeHandler
@@ -122,7 +122,7 @@ func (c OneToManyController) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Set nested reference
 	for _, field := range model.GetConfiguration().Fields {
-		if field.Name == c.NestedReference {
+		if field.Name == c.NestedForeignReference {
 			switch v := field.Pointer.(type) {
 			case *null.Int:
 				v.Int64 = foreignId
@@ -217,7 +217,7 @@ func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
 	// Set where predicate
 	bulkFetchConfig.Predicates = []surf.Predicate{
 		surf.Predicate{
-			Field:         c.NestedReference,
+			Field:         c.NestedForeignReference,
 			PredicateType: surf.WHERE_EQUAL,
 			Values:        []interface{}{id},
 		},
