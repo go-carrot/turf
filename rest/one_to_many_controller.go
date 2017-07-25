@@ -241,7 +241,7 @@ func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
 
 	// After Index hook
 	if c.LifecycleHooks.AfterIndex != nil {
-		err := c.LifecycleHooks.AfterIndex(resp, r, &bulkFetchConfig)
+		err := c.LifecycleHooks.AfterIndex(resp, r, &models)
 		if err != nil {
 			return
 		}
@@ -520,7 +520,7 @@ func (c OneToManyController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	// After Delete hook
 	if c.LifecycleHooks.AfterDelete != nil {
-		err := c.LifecycleHooks.AfterDelete(resp, r, nestedModel)
+		err := c.LifecycleHooks.AfterDelete(resp, r)
 		if err != nil {
 			return
 		}

@@ -129,6 +129,14 @@ func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Before Create hook
+	if c.LifecycleHooks.BeforeCreate != nil {
+		err := c.LifecycleHooks.BeforeCreate(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
+	}
+
 	// Create nested model
 	err = nestedModel.Insert()
 	if err != nil {
@@ -178,6 +186,14 @@ func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Create hook
+	if c.LifecycleHooks.AfterCreate != nil {
+		err := c.LifecycleHooks.AfterCreate(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
@@ -253,11 +269,27 @@ func (c OneToOneController) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Before Show hook
+	if c.LifecycleHooks.BeforeShow != nil {
+		err := c.LifecycleHooks.BeforeShow(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
+	}
+
 	// Load
 	err = nestedModel.Load()
 	if err != nil {
 		resp.SetResult(http.StatusNotFound, nil)
 		return
+	}
+
+	// After Show hook
+	if c.LifecycleHooks.AfterShow != nil {
+		err := c.LifecycleHooks.AfterShow(resp, r, model)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
@@ -371,6 +403,14 @@ func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Before Update hook
+	if c.LifecycleHooks.BeforeUpdate != nil {
+		err := c.LifecycleHooks.BeforeUpdate(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
+	}
+
 	// Update
 	err = nestedModel.Update()
 	if err != nil {
@@ -389,6 +429,14 @@ func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Update hook
+	if c.LifecycleHooks.AfterUpdate != nil {
+		err := c.LifecycleHooks.AfterUpdate(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
@@ -472,6 +520,14 @@ func (c OneToOneController) Delete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Before Delete hook
+	if c.LifecycleHooks.BeforeDelete != nil {
+		err := c.LifecycleHooks.BeforeDelete(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
+	}
+
 	// Remove foreign reference
 	err = model.Update()
 	if err != nil {
@@ -484,6 +540,14 @@ func (c OneToOneController) Delete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Delete hook
+	if c.LifecycleHooks.AfterDelete != nil {
+		err := c.LifecycleHooks.AfterDelete(resp, r)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK

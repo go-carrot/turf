@@ -5,9 +5,9 @@ import (
 	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
 	"github.com/julienschmidt/httprouter"
+	"github.com/lib/pq"
 	"math"
 	"net/http"
-	"github.com/lib/pq"
 )
 
 type ManyToManyController struct {
@@ -71,7 +71,7 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert
+	// Prep relation model
 	relationModel := c.GetRelationModel()
 	for _, field := range relationModel.GetConfiguration().Fields {
 		if field.Name == c.BaseModelForeignReference {
@@ -80,6 +80,16 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 			*field.Pointer.(*int64) = nestedId
 		}
 	}
+
+	// Before Create hook
+	if c.LifecycleHooks.BeforeCreate != nil {
+		err := c.LifecycleHooks.BeforeCreate(resp, r, relationModel)
+		if err != nil {
+			return
+		}
+	}
+
+	// Insert
 	err = relationModel.Insert()
 	if err != nil {
 		pqErr, isPqError := err.(*pq.Error)
@@ -99,13 +109,20 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// After Create hook
+	if c.LifecycleHooks.AfterCreate != nil {
+		err := c.LifecycleHooks.AfterCreate(resp, r, relationModel)
+		if err != nil {
+			return
+		}
+	}
+
 	// OK
 	resp.SetResult(http.StatusOK, nil)
 }
 
-// TODO, this can be more efficient with an IN predicate with a sub query
-// I'll need to update surf to support this.
 func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
+	// TODO, this can be more efficient with an IN predicate with a sub query
 	resp := newRestResponse(&w, r)
 	defer resp.Output()
 
@@ -168,7 +185,7 @@ func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Load nested models
+	// Prepare BulkFetchConfig
 	fetchConfig := surf.BulkFetchConfig{
 		Limit:  limit,
 		Offset: offset,
@@ -179,11 +196,29 @@ func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 	fetchConfig.ConsumeSortQuery(sort)
+
+	// Before Index hook
+	if c.LifecycleHooks.BeforeIndex != nil {
+		err := c.LifecycleHooks.BeforeIndex(resp, r, &fetchConfig)
+		if err != nil {
+			return
+		}
+	}
+
+	// Load nested models
 	nestedModels, err := c.GetNestedModel().BulkFetch(fetchConfig, c.GetNestedModel)
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Index hook
+	if c.LifecycleHooks.AfterIndex != nil {
+		err := c.LifecycleHooks.AfterIndex(resp, r, &nestedModels)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
@@ -227,7 +262,7 @@ func (c ManyToManyController) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load nested model
+	// Set ID
 	nestedModel := c.GetNestedModel()
 	for _, field := range nestedModel.GetConfiguration().Fields {
 		if field.Name == "id" {
@@ -235,11 +270,29 @@ func (c ManyToManyController) Show(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
+	// Before Show hook
+	if c.LifecycleHooks.BeforeShow != nil {
+		err := c.LifecycleHooks.BeforeShow(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
+	}
+
+	// Load nested model
 	err = nestedModel.Load()
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Show hook
+	if c.LifecycleHooks.AfterShow != nil {
+		err := c.LifecycleHooks.AfterShow(resp, r, nestedModel)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
@@ -291,13 +344,31 @@ func (c ManyToManyController) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete nested model
+	// Get relation
 	relation := relations[0]
+
+	// Before Delete hook
+	if c.LifecycleHooks.BeforeDelete != nil {
+		err := c.LifecycleHooks.BeforeDelete(resp, r, relation)
+		if err != nil {
+			return
+		}
+	}
+
+	// Delete relation
 	err = relation.Delete()
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
 		resp.SetResult(http.StatusInternalServerError, nil)
 		return
+	}
+
+	// After Delete hook
+	if c.LifecycleHooks.AfterDelete != nil {
+		err := c.LifecycleHooks.AfterDelete(resp, r)
+		if err != nil {
+			return
+		}
 	}
 
 	// OK
