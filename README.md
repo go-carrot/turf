@@ -3,13 +3,13 @@
 
 Turf is a library that works with [Surf](https://github.com/go-carrot/surf) to generate controllers.
 
-## Rest Controllers
+# Rest Controllers
 
 The subpackage `rest` inside of this repository defines the types of controllers to handle various [model types](https://github.com/carrot/restful-api-spec#determine-interface-model-types), as defined in [Carrot's Restful API Spec](https://github.com/carrot/restful-api-spec).
 
-### Models
+## Models
 
-#### Base Models
+### Base Models
 
 > Base Models are models that can be accessed directly, and are not dependent on the relation of any models.
 >
@@ -25,7 +25,7 @@ func NewPostsController() *rest.BaseController {
 }
 ```
 
-#### One-to-One Models
+### One-to-One Models
 
 > One to one models are models(a) who exist only to be associated to another model(b), and the model(b) can only reference a single model(a).
 >
@@ -46,7 +46,7 @@ func NewPostsVideoController() *rest.OneToOneController {
 }
 ```
 
-#### One-to-Many Models
+### One-to-Many Models
 
 > One to many models are models(a) that exist to be associated to another model(b), but model(b) can reference multiple models(a).
 > 
@@ -69,7 +69,7 @@ func NewAuthorPostsController() *rest.OneToManyController {
 }
 ```
 
-#### Many-to-Many Models
+### Many-to-Many Models
 
 > Many to many models are models who are responsible for associating two other models (model(a) to model(b)). These models can contain additional information about the association, but that is optional. 
 > 
@@ -93,13 +93,13 @@ func NewPostTagsController() *rest.ManyToManyController {
 }
 ```
 
-### Lifecycle Hooks
+## Lifecycle Hooks
 
 All Rest models have a field named `LifecycleHooks` that can be set to give control at a certain point in the lifecycle of a method.
 
 Usage is detailed in [this file](https://github.com/go-carrot/turf/blob/br.readme/rest/lifecycle_hooks.go).
 
-### Method Whitelists
+## Method Whitelists
 
 All Rest models have a field named `MethodWhiteList` that can be set with a slice of strings.
 
@@ -114,7 +114,7 @@ rest.BaseController{
 
 If `MethodWhiteList` is not set, all supported methods get registered upon calling `controller.Register`.
 
-## Controller Registration
+# Controller Registration
 
 All Controllers have a `Register` method that will automatically register the controller to a [httprouter.Router](https://github.com/julienschmidt/httprouter).
 
@@ -126,6 +126,6 @@ controllers.NewPostsController().Register(router, middleware.Global)
 http.ListenAndServe(":8080", router)
 ```
 
-## License
+# License
 
 [MIT](LICENSE.md)
