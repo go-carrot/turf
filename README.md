@@ -7,45 +7,89 @@ Turf is a library that works with [Surf](https://github.com/go-carrot/surf) to g
 
 The subpackage `rest` inside of this repository defines the types of controllers to handle various [model types](https://github.com/carrot/restful-api-spec#determine-interface-model-types), as defined in [Carrot's Restful API Spec](https://github.com/carrot/restful-api-spec).
 
-### Base Models
+#### Base Models
 
 > Base Models are models that can be accessed directly, and are not dependent on the relation of any models.
 >
 > [Full Definition](https://github.com/carrot/restful-api-spec#base-models)
 
 ```go
-type TasksController struct {
-	turf.Controller
-}
-
-func NewTasksController() *TasksController {
-	return &TasksController{
-		Controller: rest.BaseController{
-			GetModel: func() surf.Model {
-				return models.NewTask()
-			},
+func NewPostsController() *rest.BaseController {
+	return &rest.BaseController{
+		GetModel: func() surf.Model {
+			return models.NewPost()
 		},
 	}
 }
 ```
 
-### One-to-One Models
+#### One-to-One Models
 
 > One to one models are models(a) who exist only to be associated to another model(b), and the model(b) can only reference a single model(a).
 >
 > [Full Definition](https://github.com/carrot/restful-api-spec#one-to-one-models)
 
-### One-to-Many Models
+```go
+func NewPostsVideoController() *rest.OneToOneController {
+	return &rest.OneToOneController{
+		NestedModelNameSingular: "video",
+		ForeignReference:        "video_id", // The value in the BaseModel that references the NestedModel
+		GetBaseModel: func() surf.Model {
+			return models.NewPost()
+		},
+		GetNestedModel: func() surf.Model {
+			return models.NewVideo()
+		},
+	}
+}
+```
+
+#### One-to-Many Models
 
 > One to many models are models(a) that exist to be associated to another model(b), but model(b) can reference multiple models(a).
 > 
 > [Full Definition](https://github.com/carrot/restful-api-spec#one-to-many-models)
 
-### Many-to-Many Models
+```go
+func NewAuthorPostsController() *rest.OneToManyController {
+	return &rest.OneToManyController{
+		NestedForeignReference: "author_id", // The value in the NestedModel that references the BaseModel
+		GetBaseModel: func() surf.Model {
+			return models.NewAuthor()
+		},
+		GetNestedModel: func() surf.Model {
+			return models.NewPost()
+		},
+		BelongsTo: func(baseModel, nestedModel surf.Model) bool {
+			return nestedModel.(*models.Post).AuthorId == baseModel.(*models.Author).Id
+		},
+	}
+}
+```
+
+#### Many-to-Many Models
 
 > Many to many models are models who are responsible for associating two other models (model(a) to model(b)). These models can contain additional information about the association, but that is optional. 
 > 
 > [Full Definition](https://github.com/carrot/restful-api-spec#many-to-many-models)
+
+```go
+func NewPostTagsController() *rest.ManyToManyController {
+	return &rest.ManyToManyController{
+		BaseModelForeignReference:   "post_id", // The BaseModel reference in the RelationModel
+		NestedModelForeignReference: "tag_id",  // The NestedModel reference in the RelationModel
+		GetBaseModel: func() surf.Model {
+			return models.NewPost()
+		},
+		GetNestedModel: func() surf.Model {
+			return models.NewTag()
+		},
+		GetRelationModel: func() surf.Model {
+			return models.NewPostTag()
+		},
+	}
+}
+```
 
 ## License
 
