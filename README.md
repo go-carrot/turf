@@ -7,9 +7,7 @@ Turf is a library that works with [Surf](https://github.com/go-carrot/surf) to g
 
 The subpackage `rest` inside of this repository defines the types of controllers to handle various [model types](https://github.com/carrot/restful-api-spec#determine-interface-model-types), as defined in [Carrot's Restful API Spec](https://github.com/carrot/restful-api-spec).
 
-## Models
-
-### Base Models
+#### Base Models
 
 > Base Models are models that can be accessed directly, and are not dependent on the relation of any models.
 >
@@ -25,7 +23,7 @@ func NewPostsController() *rest.BaseController {
 }
 ```
 
-### One-to-One Models
+#### One-to-One Models
 
 > One to one models are models(a) who exist only to be associated to another model(b), and the model(b) can only reference a single model(a).
 >
@@ -46,7 +44,7 @@ func NewPostsVideoController() *rest.OneToOneController {
 }
 ```
 
-### One-to-Many Models
+#### One-to-Many Models
 
 > One to many models are models(a) that exist to be associated to another model(b), but model(b) can reference multiple models(a).
 > 
@@ -69,7 +67,7 @@ func NewAuthorPostsController() *rest.OneToManyController {
 }
 ```
 
-### Many-to-Many Models
+#### Many-to-Many Models
 
 > Many to many models are models who are responsible for associating two other models (model(a) to model(b)). These models can contain additional information about the association, but that is optional. 
 > 
