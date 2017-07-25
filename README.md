@@ -7,6 +7,8 @@ Turf is a library that works with [Surf](https://github.com/go-carrot/surf) to g
 
 The subpackage `rest` inside of this repository defines the types of controllers to handle various [model types](https://github.com/carrot/restful-api-spec#determine-interface-model-types), as defined in [Carrot's Restful API Spec](https://github.com/carrot/restful-api-spec).
 
+### Models
+
 #### Base Models
 
 > Base Models are models that can be accessed directly, and are not dependent on the relation of any models.
@@ -89,6 +91,39 @@ func NewPostTagsController() *rest.ManyToManyController {
 		},
 	}
 }
+```
+
+### Lifecycle Hooks
+
+All Rest models have a field named `LifecycleHooks` that can be set to give control at a certain point in the lifecycle of a method.
+
+Usage is detailed in [this file](https://github.com/go-carrot/turf/blob/br.readme/rest/lifecycle_hooks.go).
+
+### Method Whitelists
+
+All Rest models have a field named `MethodWhiteList` that can be set with a slice of strings.
+
+```go
+rest.BaseController{
+    GetModel: func() surf.Model {
+        return models.NewPost()
+    },
+    MethodWhiteList: []string{turf.INDEX, turf.SHOW},
+}
+```
+
+If `MethodWhiteList` is not set, all supported methods get registered upon calling `controller.Register`.
+
+## Controller Registration
+
+All Controllers have a `Register` method that will automatically register the controller to a [httprouter.Router](https://github.com/julienschmidt/httprouter).
+
+This also allows middleware to be passed in.
+
+```go
+router := httprouter.New()
+controllers.NewPostsController().Register(router, middleware.Global)
+http.ListenAndServe(":8080", router)
 ```
 
 ## License
