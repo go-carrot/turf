@@ -23,6 +23,16 @@ func NewPostsController() *rest.BaseController {
 }
 ```
 
+Registering this controller enables the following endpoints:
+
+```
+[POST]   /posts
+[GET]    /posts
+[GET]    /posts/:id
+[PUT]    /posts/:id
+[DELETE] /posts/:id
+```
+
 #### One-to-One Models
 
 > One to one models are models(a) who exist only to be associated to another model(b), and the model(b) can only reference a single model(a).
@@ -42,6 +52,15 @@ func NewPostsVideoController() *rest.OneToOneController {
 		},
 	}
 }
+```
+
+Registering this controller enables the following endpoints:
+
+```
+[POST]   /posts/:id/video
+[GET]    /posts/:id/video
+[PUT]    /posts/:id/video
+[DELETE] /posts/:id/video
 ```
 
 #### One-to-Many Models
@@ -67,6 +86,16 @@ func NewAuthorPostsController() *rest.OneToManyController {
 }
 ```
 
+Registering this controller enables the following endpoints:
+
+```
+[POST]   /authors/:id/posts
+[GET]    /authors/:id/posts
+[GET]    /authors/:id/posts/:id
+[PUT]    /authors/:id/posts/:id
+[DELETE] /authors/:id/posts/:id
+```
+
 #### Many-to-Many Models
 
 > Many to many models are models who are responsible for associating two other models (model(a) to model(b)). These models can contain additional information about the association, but that is optional. 
@@ -89,6 +118,16 @@ func NewPostTagsController() *rest.ManyToManyController {
 		},
 	}
 }
+```
+
+Registering this controller enables the following endpoints:
+
+```
+[POST]   /posts/:id/tags/:id
+[GET]    /posts/:id/tags
+[GET]    /posts/:id/tags/:id
+[PUT]    /posts/:id/tags/:id
+[DELETE] /posts/:id/tags/:id
 ```
 
 ## Lifecycle Hooks
