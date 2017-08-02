@@ -4,6 +4,7 @@ import (
 	"math"
 	"net/http"
 
+	"github.com/go-carrot/response"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
@@ -57,7 +58,7 @@ func (c ManyToManyController) Register(r *httprouter.Router, mw turf.Middleware)
 }
 
 func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -124,7 +125,7 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 
 func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
 	// TODO, this can be more efficient with an IN predicate with a sub query
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -228,7 +229,7 @@ func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c ManyToManyController) Show(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -302,7 +303,7 @@ func (c ManyToManyController) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c ManyToManyController) Update(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// There is no update for a many:many model
@@ -310,7 +311,7 @@ func (c ManyToManyController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c ManyToManyController) Delete(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
