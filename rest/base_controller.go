@@ -3,6 +3,7 @@ package rest
 import (
 	"net/http"
 
+	"github.com/go-carrot/response"
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
@@ -40,7 +41,7 @@ func (c BaseController) Register(r *httprouter.Router, mw turf.Middleware) {
 }
 
 func (c BaseController) Create(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create Model
@@ -133,7 +134,7 @@ func (c BaseController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c BaseController) Index(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create bulkFetchConfig model
@@ -187,7 +188,7 @@ func (c BaseController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c BaseController) Show(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -239,7 +240,7 @@ func (c BaseController) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c BaseController) Update(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create Model
@@ -358,7 +359,7 @@ func (c BaseController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c BaseController) Delete(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params

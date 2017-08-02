@@ -3,6 +3,7 @@ package rest
 import (
 	"net/http"
 
+	"github.com/go-carrot/response"
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
@@ -64,7 +65,7 @@ func (c OneToManyController) Register(r *httprouter.Router, mw turf.Middleware) 
 }
 
 func (c OneToManyController) Create(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create Model
@@ -177,7 +178,7 @@ func (c OneToManyController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create bulkFetchConfig model
@@ -256,7 +257,7 @@ func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToManyController) Show(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -328,7 +329,7 @@ func (c OneToManyController) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToManyController) Update(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -464,7 +465,7 @@ func (c OneToManyController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToManyController) Delete(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params

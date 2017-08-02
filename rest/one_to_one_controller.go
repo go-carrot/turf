@@ -3,6 +3,7 @@ package rest
 import (
 	"net/http"
 
+	"github.com/go-carrot/response"
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
@@ -41,7 +42,7 @@ func (c OneToOneController) Register(r *httprouter.Router, mw turf.Middleware) {
 }
 
 func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Create nested model
@@ -202,7 +203,7 @@ func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToOneController) Index(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// There is no index for a 1:1 model
@@ -210,7 +211,7 @@ func (c OneToOneController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToOneController) Show(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -298,7 +299,7 @@ func (c OneToOneController) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
@@ -452,7 +453,7 @@ func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c OneToOneController) Delete(w http.ResponseWriter, r *http.Request) {
-	resp := newRestResponse(&w, r)
+	resp := response.New(w)
 	defer resp.Output()
 
 	// Validate Params
