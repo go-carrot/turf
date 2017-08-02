@@ -272,6 +272,13 @@ func (c BaseController) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check `If-Unmodified-Since` header
+	if !isUnmodifiedSinceHeader(model, r) {
+		resp.SetErrorDetails("The `If-Unmodified-Since` condition is not satisfied")
+		resp.SetResult(http.StatusPreconditionFailed, nil)
+		return
+	}
+
 	// Generate values
 	var values []*validator.Value
 	for _, field := range model.GetConfiguration().Fields {
