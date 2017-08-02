@@ -1,13 +1,14 @@
 package rest
 
 import (
+	"math"
+	"net/http"
+
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lib/pq"
-	"math"
-	"net/http"
 )
 
 type ManyToManyController struct {
@@ -196,6 +197,7 @@ func (c ManyToManyController) Index(w http.ResponseWriter, r *http.Request) {
 		}},
 	}
 	fetchConfig.ConsumeSortQuery(sort)
+	applyModSinceHeader(&fetchConfig, r)
 
 	// Before Index hook
 	if c.LifecycleHooks.BeforeIndex != nil {

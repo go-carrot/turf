@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"net/http"
+
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
@@ -8,7 +10,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
-	"net/http"
 )
 
 type BaseController struct {
@@ -153,6 +154,9 @@ func (c BaseController) Index(w http.ResponseWriter, r *http.Request) {
 
 	// Consume sort query
 	bulkFetchConfig.ConsumeSortQuery(sort)
+
+	// Consume If-Modified-Since header
+	applyModSinceHeader(&bulkFetchConfig, r)
 
 	// Before Index hook
 	if c.LifecycleHooks.BeforeIndex != nil {

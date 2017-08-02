@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"net/http"
+
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
@@ -8,7 +10,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
-	"net/http"
 )
 
 type OneToManyController struct {
@@ -197,9 +198,6 @@ func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Consume sort query
-	bulkFetchConfig.ConsumeSortQuery(sort)
-
 	// Load Base Model
 	baseModel := c.GetBaseModel()
 	for _, field := range baseModel.GetConfiguration().Fields {
@@ -213,6 +211,12 @@ func (c OneToManyController) Index(w http.ResponseWriter, r *http.Request) {
 		resp.SetResult(http.StatusNotFound, nil)
 		return
 	}
+
+	// Consume sort query
+	bulkFetchConfig.ConsumeSortQuery(sort)
+
+	// Consume If-Modified-Since header
+	applyModSinceHeader(&bulkFetchConfig, r)
 
 	// Set where predicate
 	bulkFetchConfig.Predicates = []surf.Predicate{
