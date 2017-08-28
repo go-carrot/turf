@@ -96,14 +96,19 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		pqErr, isPqError := err.(*pq.Error)
 		if isPqError {
-			resp.SetErrorDetails(pqErr.Detail)
 			switch pqErr.Code {
 			case POSTGRES_NOT_NULL_VIOLATION:
 			case POSTGRES_ERROR_FOREIGN_KEY_VIOLATION:
+				resp.SetErrorDetails(pqErr.Detail)
 				resp.SetResult(http.StatusBadRequest, nil)
 				return
 			case POSTGRES_ERROR_UNIQUE_VIOLATION:
+				resp.SetErrorDetails(pqErr.Detail)
 				resp.SetResult(http.StatusConflict, nil)
+				return
+			case POSTGRES_CHECK_VIOLATION:
+				resp.SetErrorDetails("Failed to satisfy constraint '" + pqErr.Constraint + "'")
+				resp.SetResult(http.StatusBadRequest, nil)
 				return
 			}
 		}
