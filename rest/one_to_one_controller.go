@@ -4,12 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-carrot/response"
-	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
 	"github.com/julienschmidt/httprouter"
-	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -48,46 +46,12 @@ func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
 	// Create nested model
 	nestedModel := c.GetNestedModel()
 
-	// Validate Params
+	// Generate values to be tested
+	values := getInsertValues(r, nestedModel)
 	var id int64
-	values := []*validator.Value{
-		baseModelIdValue(&id, r),
-	}
-	for _, field := range nestedModel.GetConfiguration().Fields {
-		if field.Insertable && !field.SkipValidation {
+	values = append(values, baseModelIdValue(&id, r))
 
-			// Determine TypeHandler (if any)
-			var typeHandler validator.TypeHandler
-			switch field.Pointer.(type) {
-			case *null.String:
-				typeHandler = validator.NullStringHandler
-			case *null.Int:
-				typeHandler = validator.NullIntHandler
-			case *null.Bool:
-				typeHandler = validator.NullBoolHandler
-			case *null.Time:
-				typeHandler = validator.NullTimeHandler
-			case *null.Float:
-				typeHandler = validator.NullFloatHandler
-			}
-
-			// Set required for primitives
-			var valueRules []validator.Rule
-			if typeHandler == nil {
-				valueRules = []validator.Rule{rules.IsSet}
-			}
-
-			// Generate value
-			values = append(values,
-				&validator.Value{
-					Result:      field.Pointer,
-					Name:        field.Name,
-					Input:       r.FormValue(field.Name),
-					Rules:       valueRules,
-					TypeHandler: typeHandler,
-				})
-		}
-	}
+	// Test values
 	err := validator.Validate(values)
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
@@ -142,25 +106,7 @@ func (c OneToOneController) Create(w http.ResponseWriter, r *http.Request) {
 	// Create nested model
 	err = nestedModel.Insert()
 	if err != nil {
-		pqErr, isPqError := err.(*pq.Error)
-		if isPqError {
-			switch pqErr.Code {
-			case POSTGRES_NOT_NULL_VIOLATION:
-			case POSTGRES_ERROR_FOREIGN_KEY_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			case POSTGRES_ERROR_UNIQUE_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusConflict, nil)
-				return
-			case POSTGRES_CHECK_VIOLATION:
-				resp.SetErrorDetails("Failed to satisfy constraint '" + pqErr.Constraint + "'")
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			}
-		}
-		resp.SetResult(http.StatusInternalServerError, nil)
+		handleInsertUpdateError(resp, err)
 		return
 	}
 
@@ -378,38 +324,8 @@ func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate values
-	var values []*validator.Value
-	for _, field := range nestedModel.GetConfiguration().Fields {
-		if field.Insertable && !field.SkipValidation {
-
-			// Determine TypeHandler (if any)
-			var typeHandler validator.TypeHandler
-			switch field.Pointer.(type) {
-			case *null.String:
-				typeHandler = validator.NullStringHandler
-			case *null.Int:
-				typeHandler = validator.NullIntHandler
-			case *null.Bool:
-				typeHandler = validator.NullBoolHandler
-			case *null.Time:
-				typeHandler = validator.NullTimeHandler
-			case *null.Float:
-				typeHandler = validator.NullFloatHandler
-			}
-
-			// Generate value
-			values = append(values,
-				&validator.Value{
-					Result:      field.Pointer,
-					Name:        field.Name,
-					Input:       r.FormValue(field.Name),
-					TypeHandler: typeHandler,
-				})
-		}
-	}
-
-	// Test values
+	// Generate + test values
+	values := getUpdateValues(r, nestedModel)
 	err = validator.Validate(values)
 	if err != nil {
 		resp.SetErrorDetails(err.Error())
@@ -428,25 +344,7 @@ func (c OneToOneController) Update(w http.ResponseWriter, r *http.Request) {
 	// Update
 	err = nestedModel.Update()
 	if err != nil {
-		pqErr, isPqError := err.(*pq.Error)
-		if isPqError {
-			switch pqErr.Code {
-			case POSTGRES_NOT_NULL_VIOLATION:
-			case POSTGRES_ERROR_FOREIGN_KEY_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			case POSTGRES_ERROR_UNIQUE_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusConflict, nil)
-				return
-			case POSTGRES_CHECK_VIOLATION:
-				resp.SetErrorDetails("Failed to satisfy constraint '" + pqErr.Constraint + "'")
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			}
-		}
-		resp.SetResult(http.StatusInternalServerError, nil)
+		handleInsertUpdateError(resp, err)
 		return
 	}
 
