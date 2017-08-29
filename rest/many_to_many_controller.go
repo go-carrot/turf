@@ -9,7 +9,6 @@ import (
 	"github.com/go-carrot/turf"
 	"github.com/go-carrot/validator"
 	"github.com/julienschmidt/httprouter"
-	"github.com/lib/pq"
 )
 
 type ManyToManyController struct {
@@ -94,25 +93,7 @@ func (c ManyToManyController) Create(w http.ResponseWriter, r *http.Request) {
 	// Insert
 	err = relationModel.Insert()
 	if err != nil {
-		pqErr, isPqError := err.(*pq.Error)
-		if isPqError {
-			switch pqErr.Code {
-			case POSTGRES_NOT_NULL_VIOLATION:
-			case POSTGRES_ERROR_FOREIGN_KEY_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			case POSTGRES_ERROR_UNIQUE_VIOLATION:
-				resp.SetErrorDetails(pqErr.Detail)
-				resp.SetResult(http.StatusConflict, nil)
-				return
-			case POSTGRES_CHECK_VIOLATION:
-				resp.SetErrorDetails("Failed to satisfy constraint '" + pqErr.Constraint + "'")
-				resp.SetResult(http.StatusBadRequest, nil)
-				return
-			}
-		}
-		resp.SetResult(http.StatusInternalServerError, nil)
+		handleInsertUpdateError(resp, err)
 		return
 	}
 

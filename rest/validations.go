@@ -2,11 +2,12 @@ package rest
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/go-carrot/rules"
 	"github.com/go-carrot/surf"
 	"github.com/go-carrot/validator"
-	"net/http"
-	"strings"
 )
 
 func baseModelIdValue(output *int64, r *http.Request) *validator.Value {

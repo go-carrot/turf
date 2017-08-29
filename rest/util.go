@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-carrot/response"
 	"github.com/go-carrot/surf"
 	"github.com/guregu/null"
+	"github.com/lib/pq"
 )
 
 func contains(s []string, e string) bool {
@@ -15,6 +17,36 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func handleInsertUpdateError(resp *response.Response, err error) {
+	pqErr, isPqError := err.(*pq.Error)
+	if isPqError {
+		switch pqErr.Code {
+		case POSTGRES_NOT_NULL_VIOLATION:
+			resp.SetErrorDetails(pqErr.Detail)
+			resp.SetResult(http.StatusBadRequest, nil)
+			return
+		case POSTGRES_ERROR_FOREIGN_KEY_VIOLATION:
+			resp.SetErrorDetails(pqErr.Detail)
+			resp.SetResult(http.StatusBadRequest, nil)
+			return
+		case POSTGRES_INVALID_TEXT_REPRESENTATION:
+			resp.SetErrorDetails(pqErr.Message)
+			resp.SetResult(http.StatusBadRequest, nil)
+			return
+		case POSTGRES_ERROR_UNIQUE_VIOLATION:
+			resp.SetErrorDetails(pqErr.Detail)
+			resp.SetResult(http.StatusConflict, nil)
+			return
+		case POSTGRES_CHECK_VIOLATION:
+			resp.SetErrorDetails("Failed to satisfy constraint '" + pqErr.Constraint + "'")
+			resp.SetResult(http.StatusBadRequest, nil)
+			return
+		}
+	}
+	resp.SetResult(http.StatusInternalServerError, nil)
+	return
 }
 
 // https://tools.ietf.org/html/rfc7232#section-3.3
